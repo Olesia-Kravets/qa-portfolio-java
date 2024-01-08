@@ -1,4 +1,4 @@
-name: RUN
+name: CI
 
 on:
   workflow_dispatch:
@@ -27,31 +27,48 @@ jobs:
       - name: Install Chrome
         run: sudo apt install google-chrome-stable
 
-      - name: Run Tests
+      - name: all_tests
         if: "github.event.inputs.deployment_target == 'all_tests'"
-        run: ./gradlew test
+        run: ./gradlew clean test allureReport
         continue-on-error: true
-
-      - name: Get Allure history
-        uses: actions/checkout@v2
-        if: always()
-        continue-on-error: true
+      - name: Get allure results
+        uses: actions/upload-artifact@v4
         with:
-          ref: gh-pages
-          path: gh-pages
+          name: allure-results
+          path:
+            build/allure-results
+          retention-days: 1
 
-      - name: Build Report
-        uses: simple-elf/allure-report-action@master
-        if: always()
+  generate-report:
+    runs-on: ubuntu-latest
+    needs: test
+    name: Build Report
+    steps:
+      - uses: actions/setup-java@v4
         with:
-          allure_results: build/allure-results
-          allure_history: allure-history
-          keep_reports: 10
+          distribution: 'oracle'
+          java-version: '17'
+      - run: sudo wget https://github.com/allure-framework/allure2/releases/download/2.24.0/allure-2.24.0.tgz && sudo tar -zxvf allure-2.24.0.tgz -C /opt/ && sudo ln -s /opt/allure-2.24.0/bin/allure /usr/bin/allure
+      - name: Download workflow run artifacts
+        uses: actions/download-artifact@v4
+      - run: allure generate -c allure-results -o _site
+      - name: Store generated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: _site
+          path:
+            _site
+          retention-days: 1
 
-      - name: Publish Report
-        if: always()
-        uses: peaceiris/actions-gh-pages@v2
-        env:
-          PERSONAL_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLISH_BRANCH: gh-pages
-          PUBLISH_DIR: allure-history
+  publish-report:
+    runs-on: ubuntu-latest
+    needs: generate-report
+    name: Publish Report
+    steps:
+      - name: Download workflow run artifacts
+        uses: actions/download-artifact@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v2
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v3
