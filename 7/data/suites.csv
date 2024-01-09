@@ -1,2 +1,2 @@
 "Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
-"broken","Tue Jan 09 17:05:31 GMT 2024","Tue Jan 09 17:06:33 GMT 2024","61991","","tests.PracticeTest","","tests.PracticeTest","testFillTextBoxForm","testFillTextBoxForm()",""
+"passed","Tue Jan 09 17:12:09 GMT 2024","Tue Jan 09 17:12:24 GMT 2024","14648","","tests.PracticeTest","","tests.PracticeTest","testFillTextBoxForm","testFillTextBoxForm()",""
